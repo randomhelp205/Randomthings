@@ -1,0 +1,204 @@
+To complete the tasks described in your file, you will need to interact with several **AWS services**. Below is a list of the **AWS services** required, along with the **reason** for using each service and the **IAM policies** with all the required actions.
+
+---
+
+### **AWS Services Required**
+
+1. **IAM (Identity and Access Management)**:
+   - **Why**: To manage user profiles, roles, and permissions for accessing AWS resources.
+   - **Actions**: Create, update, delete users, and manage policies.
+
+2. **Amazon S3 (Simple Storage Service)**:
+   - **Why**: To manage buckets and objects, including tagging and moving objects.
+   - **Actions**: Create, delete, list buckets, and manage objects.
+
+3. **AWS Lambda**:
+   - **Why**: To create and manage serverless functions for automation and processing.
+   - **Actions**: Create, update, delete, and invoke Lambda functions.
+
+4. **AWS Step Functions**:
+   - **Why**: To orchestrate workflows involving multiple AWS services.
+   - **Actions**: Create, execute, and manage state machines.
+
+5. **Amazon CloudWatch**:
+   - **Why**: To monitor logs and metrics for operational visibility.
+   - **Actions**: Create log groups, put log events, and manage alarms.
+
+6. **AWS Resource Groups and Tagging**:
+   - **Why**: To manage tags for resources across AWS services.
+   - **Actions**: Tag and untag resources.
+
+7. **Amazon VPC (Virtual Private Cloud)**:
+   - **Why**: To manage VPC endpoints for secure access to AWS services.
+   - **Actions**: Create, delete, and describe VPC endpoints.
+
+8. **Amazon SageMaker**:
+   - **Why**: To manage machine learning resources and configurations.
+   - **Actions**: Create, delete, and describe SageMaker notebook instances.
+
+---
+
+### **IAM Policies with All Required Actions**
+
+Below is the **IAM policy** broken down by service, with all the required actions:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "IAMUserManagement",
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreateUser",
+        "iam:DeleteUser",
+        "iam:AttachUserPolicy",
+        "iam:DetachUserPolicy",
+        "iam:ListUsers",
+        "iam:GetUser",
+        "iam:UpdateUser"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "S3BucketAndObjectManagement",
+      "Effect": "Allow",
+      "Action": [
+        "s3:CreateBucket",
+        "s3:DeleteBucket",
+        "s3:ListBucket",
+        "s3:PutObject",
+        "s3:GetObject",
+        "s3:DeleteObject",
+        "s3:PutObjectTagging",
+        "s3:GetObjectTagging"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "LambdaFunctionManagement",
+      "Effect": "Allow",
+      "Action": [
+        "lambda:CreateFunction",
+        "lambda:InvokeFunction",
+        "lambda:UpdateFunctionCode",
+        "lambda:UpdateFunctionConfiguration",
+        "lambda:DeleteFunction",
+        "lambda:GetFunction"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "StepFunctionsManagement",
+      "Effect": "Allow",
+      "Action": [
+        "states:CreateStateMachine",
+        "states:StartExecution",
+        "states:DescribeExecution",
+        "states:DeleteStateMachine"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CloudWatchLogsAndMetrics",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents",
+        "cloudwatch:PutMetricData",
+        "cloudwatch:GetMetricData",
+        "cloudwatch:DescribeAlarms"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "TagManagement",
+      "Effect": "Allow",
+      "Action": [
+        "tag:GetResources",
+        "tag:TagResources",
+        "tag:UntagResources"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "VPCEndpointManagement",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:CreateVpcEndpoint",
+        "ec2:DeleteVpcEndpoint",
+        "ec2:DescribeVpcEndpoints"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "SageMakerManagement",
+      "Effect": "Allow",
+      "Action": [
+        "sagemaker:CreateNotebookInstance",
+        "sagemaker:DeleteNotebookInstance",
+        "sagemaker:DescribeNotebookInstance",
+        "sagemaker:ListNotebookInstances"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+---
+
+### **Explanation of Each Service and Policy**
+
+1. **IAM**:
+   - Manages user profiles and permissions.
+   - **Actions**: Create, delete, update users, and manage policies.
+
+2. **S3**:
+   - Manages buckets and objects, including tagging.
+   - **Actions**: Create, delete, list buckets, and manage objects.
+
+3. **Lambda**:
+   - Manages serverless functions for automation.
+   - **Actions**: Create, update, delete, and invoke Lambda functions.
+
+4. **Step Functions**:
+   - Manages workflows involving multiple AWS services.
+   - **Actions**: Create, execute, and manage state machines.
+
+5. **CloudWatch**:
+   - Monitors logs and metrics for operational visibility.
+   - **Actions**: Create log groups, put log events, and manage alarms.
+
+6. **Tagging**:
+   - Manages tags for resources across AWS services.
+   - **Actions**: Tag and untag resources.
+
+7. **VPC**:
+   - Manages VPC endpoints for secure access to AWS services.
+   - **Actions**: Create, delete, and describe VPC endpoints.
+
+8. **SageMaker**:
+   - Manages machine learning resources and configurations.
+   - **Actions**: Create, delete, and describe SageMaker notebook instances.
+
+---
+
+### **Next Steps**
+
+1. **Attach the Policy**:
+   - Attach the policy to the appropriate IAM role or user.
+
+2. **Test the Policy**:
+   - Use the **AWS Policy Simulator** to test the permissions.
+
+3. **Refine the Policy**:
+   - Replace `"Resource": "*"` with specific ARNs for better security.
+
+4. **Reuse Existing Policies**:
+   - If you have an existing `mloPs` execution policy, merge the required permissions into it.
+
+---
+
+Let me know if you need further assistance!
