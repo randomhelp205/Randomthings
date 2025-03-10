@@ -1,0 +1,187 @@
+Here’s the **IAM policy** broken down into **separate statements for each AWS service**, as requested. This will allow you to manage permissions for each service independently and assign them as needed.
+
+---
+
+### **IAM Policy with Separate Service Statements**
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "S3Permissions",
+      "Effect": "Allow",
+      "Action": [
+        "s3:CreateBucket",
+        "s3:DeleteBucket",
+        "s3:ListBucket",
+        "s3:PutObject",
+        "s3:GetObject",
+        "s3:DeleteObject",
+        "s3:PutObjectTagging",
+        "s3:GetObjectTagging",
+        "s3:ListAllMyBuckets",
+        "s3:GetBucketLocation",
+        "s3:GetBucketTagging",
+        "s3:PutBucketTagging"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "LambdaPermissions",
+      "Effect": "Allow",
+      "Action": [
+        "lambda:CreateFunction",
+        "lambda:InvokeFunction",
+        "lambda:UpdateFunctionCode",
+        "lambda:UpdateFunctionConfiguration",
+        "lambda:DeleteFunction",
+        "lambda:GetFunction",
+        "lambda:ListFunctions",
+        "lambda:AddPermission",
+        "lambda:RemovePermission"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "StepFunctionsPermissions",
+      "Effect": "Allow",
+      "Action": [
+        "states:CreateStateMachine",
+        "states:StartExecution",
+        "states:DescribeExecution",
+        "states:DeleteStateMachine",
+        "states:ListStateMachines",
+        "states:ListExecutions"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CloudWatchPermissions",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents",
+        "logs:DescribeLogGroups",
+        "logs:DescribeLogStreams",
+        "cloudwatch:PutMetricData",
+        "cloudwatch:GetMetricData",
+        "cloudwatch:DescribeAlarms",
+        "cloudwatch:ListMetrics"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "IAMPermissions",
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreateUser",
+        "iam:DeleteUser",
+        "iam:AttachUserPolicy",
+        "iam:DetachUserPolicy",
+        "iam:ListUsers",
+        "iam:GetUser",
+        "iam:UpdateUser",
+        "iam:CreateAccessKey",
+        "iam:DeleteAccessKey",
+        "iam:ListAccessKeys"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "VPCPermissions",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:CreateVpcEndpoint",
+        "ec2:DeleteVpcEndpoint",
+        "ec2:DescribeVpcEndpoints",
+        "ec2:ModifyVpcEndpoint"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "TaggingPermissions",
+      "Effect": "Allow",
+      "Action": [
+        "tag:GetResources",
+        "tag:TagResources",
+        "tag:UntagResources"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "SystemsManagerPermissions",
+      "Effect": "Allow",
+      "Action": [
+        "ssm:DescribeInstanceInformation",
+        "ssm:ListDocuments",
+        "ssm:SendCommand"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CloudTrailPermissions",
+      "Effect": "Allow",
+      "Action": [
+        "cloudtrail:LookupEvents",
+        "cloudtrail:GetTrailStatus"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ConfigPermissions",
+      "Effect": "Allow",
+      "Action": [
+        "config:DescribeConfigurationRecorders",
+        "config:DescribeConfigRules",
+        "config:GetResourceConfigHistory"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+---
+
+### **Explanation of Each Statement**:
+
+1. **S3Permissions**:
+   - Manages S3 buckets and objects, including creation, deletion, listing, and tagging.
+
+2. **LambdaPermissions**:
+   - Manages Lambda functions, including creation, invocation, updating, and deletion.
+
+3. **StepFunctionsPermissions**:
+   - Manages Step Functions state machines and executions.
+
+4. **CloudWatchPermissions**:
+   - Manages CloudWatch logs and metrics, including creating log groups, putting log events, and monitoring alarms.
+
+5. **IAMPermissions**:
+   - Manages IAM users, policies, and access keys.
+
+6. **VPCPermissions**:
+   - Manages VPC endpoints, including creation, deletion, and modification.
+
+7. **TaggingPermissions**:
+   - Manages resource tagging across AWS services.
+
+8. **SystemsManagerPermissions**:
+   - Manages AWS Systems Manager tasks, such as sending commands and listing documents.
+
+9. **CloudTrailPermissions**:
+   - Manages CloudTrail for auditing and monitoring API calls.
+
+10. **ConfigPermissions**:
+    - Manages AWS Config for tracking resource configurations and compliance.
+
+---
+
+### **Next Steps**:
+- Replace `"Resource": "*"` with specific ARNs (Amazon Resource Names) for better security and least privilege.
+- Test the policy using the **AWS Policy Simulator** to ensure it meets your requirements.
+- Attach the policy to the appropriate IAM role or user.
+
+Let me know if you need further assistance!
