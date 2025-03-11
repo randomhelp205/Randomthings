@@ -1,0 +1,461 @@
+Right, let's craft those enhanced policies, focusing on clarity and incorporating the admin capabilities you need, while adhering to the provided file structures and avoiding wildcards.
+
+**1. `mlops_execution_management_policy.txt` (Enhanced for Resource Management):**
+
+```json
+{
+    "iam_policy_name": "iam-${lob}-${appid}-${region}-${appname}-mlops_execution_resource_management",
+    "description": "Enhanced IAM policy for MLOps resource management with admin capabilities.",
+    "policy_document": {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Sid": "MLFlowAccessTrackingServerAccess",
+                "Effect": "Allow",
+                "Action": [
+                    "sagemaker:DescribeMlflowTrackingServer",
+                    "sagemaker:StartMlflowTrackingServer",
+                    "sagemaker:StopMlflowTrackingServer"
+                ],
+                "Resource": "arn:aws:sagemaker:${region}:${aws_account_id}:mlflow-tracking-server/*",
+                "Condition": {
+                    "StringEquals": {
+                        "sagemaker:ResourceTag/ModelGroup": "ModelGroupA"
+                    }
+                }
+            },
+            {
+                "Sid": "SecretsManagerAccess",
+                "Effect": "Allow",
+                "Action": [
+                    "secretsmanager:DescribeSecret",
+                    "secretsmanager:GetSecretValue",
+                    "secretsmanager:PutSecretValue",
+                    "secretsmanager:UpdateSecret"
+                ],
+                "Resource": "arn:aws:secretsmanager:${region}:${aws_account_id}:secret:/secret/sagemaker/${env}/${region}/*",
+                "Condition": {
+                    "StringEquals": {
+                        "secretsmanager:ResourceTag/OwnerSM": "${aws:username}"
+                    }
+                }
+            },
+            {
+                "Sid": "ECRAccess",
+                "Effect": "Allow",
+                "Action": [
+                    "ecr:DescribeRepositories",
+                    "ecr:ListImages",
+                    "ecr:BatchGetImage"
+                ],
+                "Resource": "arn:aws:ecr:${region}:${aws_account_id}:repository/*",
+                "Condition": {
+                    "StringLike": {
+                        "ecr:ResourceTag/sagemaker:domain-id": "${sagemaker:DomainId}"
+                    }
+                }
+            },
+            {
+                "Sid": "CloudWatchLogs",
+                "Effect": "Allow",
+                "Action": [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents",
+                    "logs:DescribeLogGroups",
+                    "logs:DescribeLogStreams",
+                    "logs:GetLogEvents"
+                ],
+                "Resource": "arn:aws:logs:${region}:${aws_account_id}:*"
+            },
+            {
+                "Sid": "SageMakerPassRoleAndVPC",
+                "Effect": "Allow",
+                "Action": [
+                    "iam:PassRole",
+                    "ec2:DescribeNetworkInterfaces",
+                    "ec2:DescribeVpcs",
+                    "ec2:DescribeDhcpOptions",
+                    "ec2:DescribeSubnets",
+                    "ec2:DescribeSecurityGroups"
+                ],
+                "Resource": "*"
+            },
+            {
+                "Sid": "CloudWatchMetrics",
+                "Effect": "Allow",
+                "Action": [
+                    "cloudwatch:PutMetricData"
+                ],
+                "Resource": ["arn:aws:cloudwatch:${region}:${aws_account_id}:*"],
+                "Condition": {
+                    "StringLike": {
+                        "cloudwatch:namespace": "aws/sagemaker/*"
+                    }
+                }
+            },
+            {
+                "Sid": "KMSDecrypt",
+                "Effect": "Allow",
+                "Action": [
+                    "kms:Decrypt",
+                    "kms:GenerateDataKey"
+                ],
+                "Resource": "arn:aws:kms:${region}:${aws_account_id}:key/*"
+            },
+            {
+                "Sid": "S3BucketAccess",
+                "Effect": "Allow",
+                "Action": [
+                    "s3:ListAllMyBuckets",
+                    "s3:GetBucketAcl",
+                    "s3:GetBucketCORS",
+                    "s3:GetBucketLocation",
+                    "s3:GetBucketTagging",
+                    "s3:GetObject",
+                    "s3:PutObject",
+                    "s3:DeleteObject",
+                    "s3:ListBucket",
+                    "s3:GetObjectAcl",
+                    "s3:PutObjectAcl"
+                ],
+                "Resource": [
+                    "arn:aws:s3:::*",
+                    "arn:aws:s3:::*/*"
+                ]
+            },
+            {
+                "Sid": "LambdaManagement",
+                "Effect": "Allow",
+                "Action": [
+                    "lambda:CreateFunction",
+                    "lambda:InvokeFunction",
+                    "lambda:UpdateFunctionCode",
+                    "lambda:UpdateFunctionConfiguration",
+                    "lambda:DeleteFunction",
+                    "lambda:GetFunction",
+                    "lambda:ListFunctions",
+                    "lambda:GetFunctionConfiguration"
+                ],
+                "Resource": "arn:aws:lambda:${region}:${aws_account_id}:function:*"
+            },
+            {
+                "Sid": "StepFunctionsManagement",
+                "Effect": "Allow",
+                "Action": [
+                    "states:StartExecution",
+                    "states:StopExecution",
+                    "states:DescribeExecution",
+                    "states:UpdateStateMachine",
+                    "states:ListExecutions",
+                    "states:ListStateMachines",
+                    "states:ListActivities",
+                    "states:CreateStateMachine",
+                    "states:DeleteStateMachine",
+                    "states:DescribeStateMachine"
+                ],
+                "Resource": "arn:aws:states:${region}:${aws_account_id}:*"
+            },
+            {
+                "Sid": "SageMakerTagging",
+                "Effect": "Allow",
+                "Action": [
+                    "sagemaker:ListTags",
+                    "sagemaker:AddTags",
+                    "sagemaker:RemoveTags"
+                ],
+                "Resource": "arn:aws:sagemaker:${region}:${aws_account_id}:*"
+            }
+        ]
+    }
+}
+```
+
+**2. `Mlops_execution_read_policy.txt` (Enhanced for SageMaker Read with Admin):**
+
+```json
+{
+    "iam_policy_name": "iam-${lob}-${appid}-${region}-${appname}-mlops_execution_sagemaker_read",
+    "description": "Enhanced IAM policy for SageMaker read actions with admin capabilities.",
+    "policy_document": {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Sid": "DataScientistListActions",
+                "Effect": "Allow",
+                "Action": [
+                    "sagemaker:Search",
+                    "sagemaker:GetSearchSuggestions",
+                    "sagemaker:SearchTrainingPlanOfferings",
+                    "sagemaker:ListAppImageConfigs",
+                    "sagemaker:ListApps",
+                    "sagemaker:ListArtifacts",
+                    "sagemaker:ListActions",
+                    "sagemaker:ListAssociations",
+                    "sagemaker:ListCandidatesForAutoMLJob",
+                    "sagemaker:ListCodeRepositories",
+                    "sagemaker:ListContexts",
+                    "sagemaker:ListDataQualityJobDefinitions",
+                    "sagemaker:ListDeviceFleets",
+                    "sagemaker:ListDevices",
+                    "sagemaker:ListDomains",
+                    "sagemaker:ListEdgeDeploymentPlans",
+                    "sagemaker:ListEdgeDeploymentStages",
+                    "sagemaker:ListExperiments",
+                    "sagemaker:ListFeatureGroups",
+                    "sagemaker:ListFlowDefinitions",
+                    "sagemaker:ListHubContentVersions",
+                    "sagemaker:ListHubContents",
+                    "sagemaker:ListHubs",
+                    "sagemaker:ListHumanTaskUis",
+                    "sagemaker:ListHyperParameterTuningJobs",
+                    "sagemaker:ListImages",
+                    "sagemaker:ListImageVersions",
+                    "sagemaker:ListInferenceComponents",
+                    "sagemaker:ListInferenceExperiments",
+                    "sagemaker:ListLabelingJobs",
+                    "sagemaker:ListLineageGroups",
+                    "sagemaker:ListModelBiasJobDefinitions",
+                    "sagemaker:ListModelCardExportJobs",
+                    "sagemaker:ListModelCards",
+                    "sagemaker:ListModelExplainabilityJobDefinitions",
+                    "sagemaker:ListModelPackageGroups",
+                    "sagemaker:ListModelPackages",
+                    "sagemaker:ListModelQuality
+
+
+
+
+
+
+
+
+
+
+Got it. Let's continue completing the enhanced policies based on the provided file snippets and your requirements.
+
+**3. `mlops_execution_write_policy.txt` (Enhanced for SageMaker Write with Admin):**
+
+```json
+{
+    "iam_policy_name": "iam-${lob}-${appid}-${region}-${appname}-mlops_execution_sagemaker_write",
+    "description": "Enhanced IAM policy for SageMaker write actions with admin capabilities.",
+    "policy_document": {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Sid": "MLOPsCreateActions",
+                "Effect": "Allow",
+                "Action": [
+                    "sagemaker:CreateLabelingJob",
+                    "sagemaker:CreateProcessingJob",
+                    "sagemaker:CreateTrainingJob",
+                    "sagemaker:CreateModel",
+                    "sagemaker:CreateEndpointConfig",
+                    "sagemaker:CreateEndpoint",
+                    "sagemaker:CreateExperiment",
+                    "sagemaker:CreateHyperParameterTuningJob",
+                    "sagemaker:CreateModelPackage",
+                    "sagemaker:CreateModelPackageGroup",
+                    "sagemaker:CreatePipeline",
+                    "sagemaker:CreateProject",
+                    "sagemaker:CreateTransformJob",
+                    "sagemaker:CreateTrial",
+                    "sagemaker:CreateTrialComponent",
+                    "sagemaker:CreateDomain",
+                    "sagemaker:CreateUserProfile",
+                    "sagemaker:CreateSpace",
+                    "sagemaker:CreateApp",
+                    "sagemaker:CreateLifecycleConfig"
+                ],
+                "Resource": "arn:aws:sagemaker:${region}:${aws_account_id}:*"
+            },
+            {
+                "Sid": "TagOnCreateActions",
+                "Effect": "Allow",
+                "Action": "sagemaker:AddTags",
+                "Resource": "arn:aws:sagemaker:${region}:${aws_account_id}:*",
+                "Condition": {
+                    "StringEquals": {
+                        "sagemaker:TaggingResourceType": [
+                            "ModelPackageGroup",
+                            "ModelPackage",
+                            "EndpointConfig",
+                            "Endpoint",
+                            "Experiment",
+                            "HyperParameterTuningJob",
+                            "LabelingJob",
+                            "Model",
+                            "Pipeline",
+                            "ProcessingJob",
+                            "Project",
+                            "TrainingJob",
+                            "TransformJob",
+                            "Trial",
+                            "TrialComponent",
+                            "Domain",
+                            "UserProfile",
+                            "Space",
+                            "App",
+                            "LifecycleConfig"
+                        ]
+                    }
+                }
+            },
+            {
+                "Sid": "MLOPsDeleteActions",
+                "Effect": "Allow",
+                "Action": [
+                    "sagemaker:DeleteExperiment",
+                    "sagemaker:DeleteModel",
+                    "sagemaker:DeleteModelPackage",
+                    "sagemaker:DeleteModelPackageGroup",
+                    "sagemaker:DeletePipeline",
+                    "sagemaker:DeleteProject",
+                    "sagemaker:DeleteTrial",
+                    "sagemaker:DeleteTrialComponent",
+                    "sagemaker:DeleteDomain",
+                    "sagemaker:DeleteUserProfile",
+                    "sagemaker:DeleteSpace",
+                    "sagemaker:DeleteApp",
+                    "sagemaker:DeleteLifecycleConfig"
+                ],
+                "Resource": "arn:aws:sagemaker:${region}:${aws_account_id}:*"
+            },
+            {
+                "Sid": "MLOPsUpdateActions",
+                "Effect": "Allow",
+                "Action": [
+                    "sagemaker:UpdateExperiment",
+                    "sagemaker:UpdateModelPackage",
+                    "sagemaker:UpdatePipeline",
+                    "sagemaker:UpdateProject",
+                    "sagemaker:UpdateTrial",
+                    "sagemaker:UpdateTrialComponent",
+                    "sagemaker:UpdateDomain",
+                    "sagemaker:UpdateUserProfile",
+                    "sagemaker:UpdateSpace",
+                    "sagemaker:UpdateApp",
+                    "sagemaker:UpdateLifecycleConfig",
+                    "sagemaker:UpdateMonitoringSchedule",
+                    "sagemaker:DeleteMonitoringSchedule",
+                    "sagemaker:CreateMonitoringSchedule"
+                ],
+                "Resource": "arn:aws:sagemaker:${region}:${aws_account_id}:*"
+            },
+            {
+                "Sid": "SMStudioCreateApp",
+                "Effect": "Allow",
+                "Action": "sagemaker:CreateApp",
+                "Resource": "arn:aws:sagemaker:${region}:${aws_account_id}:app/${sagemaker:DomainId}/${sagemaker:UserProfileName}/*",
+                "Condition": {
+                    "StringEquals": {
+                        "sagemaker:AppType": [
+                            "JupyterServer",
+                            "KernelGateway",
+                            "TensorBoard",
+                            "CodeEditor",
+                            "RStudioServerPro"
+                        ]
+                    },
+                    "ForAllValues:StringNotEquals": {
+                        "sagemaker:InstanceTypes": [
+                            "ml.g4dn.xlarge",
+                            "ml.g4dn.2xlarge"
+                        ]
+                    }
+                }
+            },
+            {
+                "Sid": "SMStudioCreatePresignedDomainUrlForUserProfile",
+                "Effect": "Allow",
+                "Action": "sagemaker:CreatePresignedDomainUrl",
+                "Resource": "arn:aws:sagemaker:${region}:${aws_account_id}:user-profile/${sagemaker:DomainId}/${sagemaker:UserProfileName}"
+            }
+        ]
+    }
+}
+```
+
+**4. `mlops_ececution_deployement_policy.txt` (Deployment Policy - No Admin Changes Needed):**
+
+```json
+{
+    "iam_policy_name": "iam-${lob}-${appid}-${region}-${appname}-mlops_execution_resource_management",
+    "description": "This IAM policy provides permissions to interact with some services such as CloudWatch, S3, Secrets Manager, and ECR, and utilize MLFlow for experiment tracking and model management.",
+    "policy_document": {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Sid": "MLOPsCreateActions",
+                "Effect": "Allow",
+                "Action": [
+                    "sagemaker:CreateEndpoint",
+                    "sagemaker:CreateEndpointConfig",
+                    "sagemaker:CreateInferenceComponent",
+                    "sagemaker:CreateInferenceExperiment",
+                    "sagemaker:CreateInferenceRecommendationsJob",
+                    "sagemaker:CreateEdgeDeploymentPlan",
+                    "sagemaker:CreateEdgeDeploymentStage"
+                ],
+                "Resource": [
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:*"
+                ]
+            },
+            {
+                "Sid": "TagOnCreateActions",
+                "Effect": "Allow",
+                "Action": "sagemaker:AddTags",
+                "Resource": [
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:*"
+                ],
+                "Condition": {
+                    "StringEquals": {
+                        "sagemaker:TaggingResourceType": [
+                            "EndpointConfig",
+                            "Endpoint",
+                            "InferenceComponent",
+                            "InferenceExperiment",
+                            "InferenceRecommendationsJob",
+                            "EdgeDeploymentPlan",
+                            "EdgeDeploymentStage"
+                        ]
+                    }
+                }
+            },
+            {
+                "Sid": "MLOPsUpdateActions",
+                "Effect": "Allow",
+                "Action": [
+                    "sagemaker:UpdateEndpoint",
+                    "sagemaker:UpdateEndpointWeightsAndCapacities",
+                    "sagemaker:UpdateInferenceComponent",
+                    "sagemaker:UpdateInferenceExperiment",
+                    "sagemaker:StopInferenceExperiment"
+                ],
+                "Resource": [
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:*"
+                ]
+            },
+            {
+                "Sid": "MLOPsDeleteActions",
+                "Effect": "Allow",
+                "Action": [
+                    "sagemaker:DeleteEndpoint",
+                    "sagemaker:DeleteEndpointConfig",
+                    "sagemaker:DeleteInferenceComponent",
+                    "sagemaker:DeleteInferenceExperiment",
+                    "sagemaker:DeleteEdgeDeploymentPlan",
+                    "sagemaker:DeleteEdgeDeploymentStage"
+                ],
+                "Resource": [
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:*"
+                ]
+            },
+            {
+                "Sid": "LambdaInvoke",
+                "Effect": "Allow",
+                "Action": [
+                    "lambda:InvokeFunction"
+                ],
+                "Resource": "arn:aws:lambda:${region}:${aws_account_
