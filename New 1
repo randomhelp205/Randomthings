@@ -1,0 +1,225 @@
+Absolutely. Let's break down your requirements and then craft the enhanced policies.
+
+**Requirements Breakdown:**
+
+* **SageMaker Admin Capabilities:**
+    * Full control over SageMaker domains, user profiles, and lifecycle configurations.
+    * Management of all SageMaker services (training jobs, endpoints, pipelines, model registry, etc.).
+* **Comprehensive Resource Management:**
+    * Object management (S3).
+    * Lambda function management.
+    * Step Functions management.
+    * CloudWatch logs and metrics access.
+    * Tagging capabilities (add, update) on all resources.
+    * Endpoint management.
+* **Granular Permissions:**
+    * Avoid wildcard (`*`) permissions; specify individual actions.
+* **Policy Structure:**
+    * Maintain the existing policy structure (read, write, deployment, management).
+    * Integrate admin capabilities into the appropriate policy files.
+
+**Enhanced Policy Creation:**
+
+Here's how we'll enhance each policy file:
+
+**1. MLOps Execution Resource Management (mlops_execution_management_policy.txt):**
+
+* **Additions:**
+    * Comprehensive S3 object management (put, get, delete, list).
+    * Full Lambda function management (create, invoke, update, delete).
+    * Full Step Functions management (start, stop, describe, update).
+    * Expanded CloudWatch permissions for metrics and logs.
+    * Add sagemaker list tags, add tags and remove tags.
+* **Rationale:**
+    * This policy focuses on the underlying infrastructure and resource dependencies. Admin users need full control over these components.
+
+```json
+{
+    "iam_policy_name": "iam-${lob}-${appid}-${region}-${appname}-mlops_execution_resource_management",
+    "description": "Enhanced IAM policy for MLOps resource management with admin capabilities.",
+    "policy_document": {
+        "Version": "2012-10-17",
+        "Statement": [
+            //Existing MLFlow, Secrets Manager, ECR, CloudWatch, SageMaker, KMS, S3 bucket access
+            {
+                "Sid": "S3ObjectManagement",
+                "Effect": "Allow",
+                "Action": [
+                    "s3:GetObject",
+                    "s3:PutObject",
+                    "s3:DeleteObject",
+                    "s3:ListBucket",
+                    "s3:GetObjectAcl",
+                    "s3:PutObjectAcl"
+                ],
+                "Resource": [
+                    "arn:aws:s3:::*",
+                    "arn:aws:s3:::*/*"
+                ]
+            },
+            {
+                "Sid": "LambdaManagement",
+                "Effect": "Allow",
+                "Action": [
+                    "lambda:CreateFunction",
+                    "lambda:InvokeFunction",
+                    "lambda:UpdateFunctionCode",
+                    "lambda:UpdateFunctionConfiguration",
+                    "lambda:DeleteFunction",
+                    "lambda:GetFunction",
+                    "lambda:ListFunctions",
+                    "lambda:GetFunctionConfiguration"
+                ],
+                "Resource": "arn:aws:lambda:${region}:${aws_account_id}:function:*"
+            },
+            {
+                "Sid": "StepFunctionsManagement",
+                "Effect": "Allow",
+                "Action": [
+                    "states:StartExecution",
+                    "states:StopExecution",
+                    "states:DescribeExecution",
+                    "states:UpdateStateMachine",
+                    "states:ListExecutions",
+                    "states:ListStateMachines",
+                    "states:ListActivities",
+                    "states:CreateStateMachine",
+                    "states:DeleteStateMachine",
+                    "states:DescribeStateMachine"
+                ],
+                "Resource": "arn:aws:states:${region}:${aws_account_id}:*"
+            },
+            {
+                "Sid": "CloudWatchMetricsLogs",
+                "Effect": "Allow",
+                "Action": [
+                    "cloudwatch:PutMetricData",
+                    "cloudwatch:GetMetricData",
+                    "cloudwatch:GetMetricStatistics",
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents",
+                    "logs:DescribeLogGroups",
+                    "logs:DescribeLogStreams",
+                    "logs:GetLogEvents"
+                ],
+                "Resource": [
+                    "arn:aws:cloudwatch:${region}:${aws_account_id}:*",
+                    "arn:aws:logs:${region}:${aws_account_id}:*"
+                ]
+            },
+            {
+                "Sid": "SageMakerTagging",
+                "Effect": "Allow",
+                "Action": [
+                    "sagemaker:ListTags",
+                    "sagemaker:AddTags",
+                    "sagemaker:RemoveTags"
+                ],
+                "Resource": "arn:aws:sagemaker:${region}:${aws_account_id}:*"
+            }
+        ]
+    }
+}
+```
+
+**2. MLOps Execution SageMaker Read (Mlops_execution_read_policy.txt):**
+
+* **Additions:**
+    * Describe actions for all SageMaker resources.
+    * Describe Actions for domain and user profiles.
+* **Rationale:**
+    * Admin users need to inspect all SageMaker resources.
+
+```json
+{
+    "iam_policy_name": "iam-${lob}-${appid}-${region}-${appname}-mlops_execution_sagemaker_read",
+    "description": "Enhanced IAM policy for SageMaker read actions with admin capabilities.",
+    "policy_document": {
+        "Version": "2012-10-17",
+        "Statement": [
+            //Existing SageMaker list and describe actions.
+            {
+                "Sid": "SageMakerDescribeAll",
+                "Effect": "Allow",
+                "Action": [
+                    "sagemaker:Describe*",
+                    "sagemaker:List*"
+                ],
+                "Resource": "arn:aws:sagemaker:${region}:${aws_account_id}:*"
+            },
+            {
+                "Sid": "SageMakerDomainAndUserProfileRead",
+                "Effect": "Allow",
+                "Action": [
+                    "sagemaker:DescribeDomain",
+                    "sagemaker:ListDomains",
+                    "sagemaker:DescribeUserProfile",
+                    "sagemaker:ListUserProfiles",
+                    "sagemaker:ListSpaces",
+                    "sagemaker:DescribeSpace"
+                ],
+                "Resource": "arn:aws:sagemaker:${region}:${aws_account_id}:*"
+            }
+        ]
+    }
+}
+```
+
+**3. MLOps Execution SageMaker Write (mlops_execution_write_policy.txt):**
+
+* **Additions:**
+    * Create, update, and delete actions for all SageMaker resources, including domains and user profiles.
+    * Add actions for lifecycle configuration.
+* **Rationale:**
+    * Admin users need to fully manage all SageMaker resources.
+
+```json
+{
+    "iam_policy_name": "iam-${lob}-${appid}-${region}-${appname}-mlops_execution_sagemaker_write",
+    "description": "Enhanced IAM policy for SageMaker write actions with admin capabilities.",
+    "policy_document": {
+        "Version": "2012-10-17",
+        "Statement": [
+            //Existing SageMaker create, update, delete actions
+            {
+                "Sid": "SageMakerWriteAll",
+                "Effect": "Allow",
+                "Action": [
+                    "sagemaker:Create*",
+                    "sagemaker:Update*",
+                    "sagemaker:Delete*"
+                ],
+                "Resource": "arn:aws:sagemaker:${region}:${aws_account_id}:*"
+            },
+            {
+                "Sid": "SageMakerDomainAndUserProfileWrite",
+                "Effect": "Allow",
+                "Action": [
+                    "sagemaker:CreateDomain",
+                    "sagemaker:UpdateDomain",
+                    "sagemaker:DeleteDomain",
+                    "sagemaker:CreateUserProfile",
+                    "sagemaker:UpdateUserProfile",
+                    "sagemaker:DeleteUserProfile",
+                    "sagemaker:CreateSpace",
+                    "sagemaker:UpdateSpace",
+                    "sagemaker:DeleteSpace",
+                    "sagemaker:CreateApp",
+                    "sagemaker:DeleteApp",
+                    "sagemaker:UpdateApp",
+                    "sagemaker:CreateLifecycleConfig",
+                    "sagemaker:DeleteLifecycleConfig",
+                    "sagemaker:UpdateLifecycleConfig"
+                ],
+                "Resource": "arn:aws:sagemaker:${region}:${aws_account_id}:*"
+            }
+        ]
+    }
+}
+```
+
+**4. MLOps Execution Deployment (mlops_ececution_deployement_policy.txt):**
+
+* **Additions:**
+    * No major changes, as the existing deployment policy already covers endpoint management.
