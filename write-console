@@ -1,0 +1,167 @@
+To add **console policies** to your existing MLOps write management policy, we will reuse the **existing actions** from the provided policy and adapt them for **console access**. Since the console is primarily for **read-only access**, we will focus on `Describe` and `List` actions, but we will also include **create/delete actions** as per your requirement.
+
+Below is the updated policy with **console-specific permissions** added, reusing only the actions from the provided policy:
+
+### Updated Policy with Console Permissions
+```json
+{
+    "iam_policy_name": "iam-${lob}-${appid}-${region}-${appname}-mlops_console_sagemaker_write",
+    "description": "This IAM policy provides permissions for SageMaker actions, including create, delete, update resources, and read-only access for console operations.",
+    "policy_document": {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Sid": "MLOPsConsoleCreateActions",
+                "Effect": "Allow",
+                "Action": [
+                    "sagemaker:CreateLabelingJob",
+                    "sagemaker:CreateProcessingJob",
+                    "sagemaker:CreateTrainingJob",
+                    "sagemaker:CreateHyperParameterTuningJob",
+                    "sagemaker:CreateAutoMLJobV2",
+                    "sagemaker:CreateModelBiasJobDefinition",
+                    "sagemaker:CreateModelQualityJobDefinition",
+                    "sagemaker:CreateDataQualityJobDefinition",
+                    "sagemaker:CreateModelExplainabilityJobDefinition",
+                    "sagemaker:CreateExperiment",
+                    "sagemaker:CreateTrial",
+                    "sagemaker:CreateModel",
+                    "sagemaker:CreateModelCard",
+                    "sagemaker:CreateModelCardExportJob",
+                    "sagemaker:CreatePipeline",
+                    "sagemaker:CreateTransformJob",
+                    "sagemaker:CreateMonitoringSchedule",
+                    "sagemaker:CreateEdgeDeploymentPlan",
+                    "sagemaker:CreateEdgeDeploymentStage"
+                ],
+                "Resource": [
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:labeling-job/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:processing-job/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:training-job/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:hyper-parameter-tuning-job/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:automl-job/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:model-bias-job-definition/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:model-quality-job-definition/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:data-quality-job-definition/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:model-explainability-job-definition/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:experiment/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:experiment-trial/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:model/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:model-card/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:pipeline/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:transform-job/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:monitoring-schedule/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:edge-deployment-plan/*"
+                ]
+            },
+            {
+                "Sid": "MLOPsConsoleDeleteActions",
+                "Effect": "Allow",
+                "Action": [
+                    "sagemaker:DeleteLabelingJob",
+                    "sagemaker:DeleteProcessingJob",
+                    "sagemaker:DeleteTrainingJob",
+                    "sagemaker:DeleteHyperParameterTuningJob",
+                    "sagemaker:DeleteAutoMLJobV2",
+                    "sagemaker:DeleteModelBiasJobDefinition",
+                    "sagemaker:DeleteModelQualityJobDefinition",
+                    "sagemaker:DeleteDataQualityJobDefinition",
+                    "sagemaker:DeleteModelExplainabilityJobDefinition",
+                    "sagemaker:DeleteExperiment",
+                    "sagemaker:DeleteTrial",
+                    "sagemaker:DeleteModel",
+                    "sagemaker:DeleteModelCard",
+                    "sagemaker:DeletePipeline",
+                    "sagemaker:DeleteTransformJob",
+                    "sagemaker:DeleteMonitoringSchedule",
+                    "sagemaker:DeleteEdgeDeploymentPlan",
+                    "sagemaker:DeleteEdgeDeploymentStage"
+                ],
+                "Resource": [
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:labeling-job/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:processing-job/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:training-job/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:hyper-parameter-tuning-job/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:automl-job/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:model-bias-job-definition/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:model-quality-job-definition/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:data-quality-job-definition/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:model-explainability-job-definition/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:experiment/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:experiment-trial/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:model/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:model-card/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:pipeline/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:transform-job/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:monitoring-schedule/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:edge-deployment-plan/*"
+                ],
+                "Condition": {
+                    "StringEquals": {
+                        "aws:userId": "$${aws:ResourceTag/ExecutionRole}"
+                    }
+                }
+            },
+            {
+                "Sid": "MLOPsConsoleDescribeActions",
+                "Effect": "Allow",
+                "Action": [
+                    "sagemaker:DescribeLabelingJob",
+                    "sagemaker:DescribeProcessingJob",
+                    "sagemaker:DescribeTrainingJob",
+                    "sagemaker:DescribeHyperParameterTuningJob",
+                    "sagemaker:DescribeAutoMLJobV2",
+                    "sagemaker:DescribeModelBiasJobDefinition",
+                    "sagemaker:DescribeDataQualityJobDefinition",
+                    "sagemaker:DescribeModelExplainabilityJobDefinition",
+                    "sagemaker:DescribeModelQualityJobDefinition",
+                    "sagemaker:DescribeExperiment",
+                    "sagemaker:DescribeTrial",
+                    "sagemaker:DescribeModel",
+                    "sagemaker:DescribeModelCard",
+                    "sagemaker:DescribePipeline",
+                    "sagemaker:DescribeTransformJob",
+                    "sagemaker:DescribeMonitoringSchedule",
+                    "sagemaker:DescribeEdgeDeploymentPlan"
+                ],
+                "Resource": "*"
+            },
+            {
+                "Sid": "MLOPsConsoleListActions",
+                "Effect": "Allow",
+                "Action": [
+                    "sagemaker:ListLabelingJobs",
+                    "sagemaker:ListProcessingJobs",
+                    "sagemaker:ListTrainingJobs",
+                    "sagemaker:ListHyperParameterTuningJobs",
+                    "sagemaker:ListAutoMLJobsV2",
+                    "sagemaker:ListModelBiasJobDefinitions",
+                    "sagemaker:ListDataQualityJobDefinitions",
+                    "sagemaker:ListModelExplainabilityJobDefinitions",
+                    "sagemaker:ListModelQualityJobDefinitions",
+                    "sagemaker:ListExperiments",
+                    "sagemaker:ListTrials",
+                    "sagemaker:ListModels",
+                    "sagemaker:ListModelCards",
+                    "sagemaker:ListPipelines",
+                    "sagemaker:ListTransformJobs",
+                    "sagemaker:ListMonitoringSchedules",
+                    "sagemaker:ListEdgeDeploymentPlans"
+                ],
+                "Resource": "*"
+            }
+        ]
+    }
+}
+```
+
+### Key Points:
+1. **Reused Actions**: Only the actions from the provided policy are reused. No extra actions are added.
+2. **Create/Delete Actions**: Added `Create` and `Delete` actions for SageMaker resources to allow users to manage resources via the console.
+3. **Read-Only Actions**: Included `Describe` and `List` actions for monitoring and viewing resources in the console.
+4. **Resource Isolation**: The `Condition` block ensures that users can only delete resources tagged with their execution role.
+
+### Use Case:
+This policy is designed for users who need **console access** to **manage and monitor** SageMaker resources. It allows them to **create, delete, and view** resources while maintaining isolation based on resource tags. Attach this policy to roles or users who require console access for managing MLOps workflows.
+
+Let me know if you need further adjustments!
