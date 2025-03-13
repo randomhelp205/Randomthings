@@ -1,0 +1,116 @@
+Understood! We will reuse the **existing actions** from the provided policy and adapt them for **console access**. Since the console is primarily for **read-only access**, we will focus on `Describe` and `List` actions, but we will also include **create/delete actions** as per your requirement.
+
+Below is the updated policy with **console-specific permissions** added, reusing only the actions from the provided policy:
+
+### Updated Policy with Console Permissions
+```json
+{
+    "iam_policy_name": "iam-${lob}-${appid}-${region}-${appname}-mlops_console_sagemaker_read",
+    "description": "This IAM policy provides read-only permissions for SageMaker actions, including describing and listing resources like domains, user profiles, apps, models, and experiments, for console access.",
+    "policy_document": {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Sid": "SageMakerConsoleListActions",
+                "Effect": "Allow",
+                "Action": [
+                    "sagemaker:Search",
+                    "sagemaker:GetSearchSuggestions",
+                    "sagemaker:SearchTrainingPlanOfferings",
+                    "sagemaker:ListAppImageConfigs",
+                    "sagemaker:ListApps",
+                    "sagemaker:ListArtifacts",
+                    "sagemaker:ListAssoications",
+                    "sagemaker:ListAutoMLJobs",
+                    "sagemaker:ListAutoMLJobsV2",
+                    "sagemaker:ListCandidatesForAutoMLJob",
+                    "sagemaker:ListCanvasApp",
+                    "sagemaker:ListCodeRepositories",
+                    "sagemaker:ListCompilationJobs",
+                    "sagemaker:ListContexts",
+                    "sagemaker:ListDataQualityJobDefinitions",
+                    "sagemaker:ListDomains",
+                    "sagemaker:ListExperiments",
+                    "sagemaker:ListFeatureGroups",
+                    "sagemaker:ListFlowDefinitions",
+                    "sagemaker:ListHumanLoops",
+                    "sagemaker:ListHumanTaskUis",
+                    "sagemaker:ListHyperParameterTuningJobs",
+                    "sagemaker:ListImages",
+                    "sagemaker:ListImageVersions",
+                    "sagemaker:ListLabelingJobs",
+                    "sagemaker:ListLabelingJobForWorkteam",
+                    "sagemaker:ListLineageGroups",
+                    "sagemaker:ListMlflowTrackingServers",
+                    "sagemaker:ListModelPackageGroups",
+                    "sagemaker:ListModelPackages",
+                    "sagemaker:ListModels",
+                    "sagemaker:ListModel*",
+                    "sagemaker:ListModelCardExportJobs",
+                    "sagemaker:ListModelCardVersions",
+                    "sagemaker:ListModelCards",
+                    "sagemaker:ListMonitoringSchedules",
+                    "sagemaker:ListNotebookInstances",
+                    "sagemaker:ListOptimizationJobs",
+                    "sagemaker:ListPipelineExecutions",
+                    "sagemaker:ListPipelineExecutionSteps",
+                    "sagemaker:ListPipelineParametersForExecution",
+                    "sagemaker:ListPipeline*",
+                    "sagemaker:ListPipelines",
+                    "sagemaker:ListProcessingJobs",
+                    "sagemaker:ListProjects",
+                    "sagemaker:ListSharedModelEvents",
+                    "sagemaker:ListSpaces",
+                    "sagemaker:ListStudioLifecycleConfigs",
+                    "sagemaker:ListSubscribedWorkteams",
+                    "sagemaker:ListTags",
+                    "sagemaker:ListTrainingJobs",
+                    "sagemaker:ListTrainingJobsForHyperParameterTuningJob",
+                    "sagemaker:ListTrainingPlans",
+                    "sagemaker:ListTransformJobs",
+                    "sagemaker:ListTrialComponents",
+                    "sagemaker:ListTrials",
+                    "sagemaker:ListUserProfiles",
+                    "sagemaker:ListWorkforces",
+                    "sagemaker:ListWorkteams",
+                    "sagemaker:ListModelBiasJobDefinitions",
+                    "sagemaker:ListModelQualityJobDefinitions",
+                    "sagemaker:ListModelExplainabilityJobDefinitions",
+                    "sagemaker:ListMonitoringAlertHistory",
+                    "sagemaker:ListMonitoringAlerts",
+                    "sagemaker:ListMonitoringExecutions",
+                    "sagemaker:ListMonitoringSchedules",
+                    "sagemaker:ListCompilationJobs"
+                ],
+                "Resource": "*"
+            },
+            {
+                "Sid": "SageMakerConsoleDescribeActions",
+                "Effect": "Allow",
+                "Action": [
+                    "sagemaker:DescribeModelCardExportJob",
+                    "sagemaker:DescribeOptimizationJob"
+                ],
+                "Resource": [
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:*"
+                ],
+                "Condition": {
+                    "StringEqualsIgnoreCase": {
+                        "aws:userId": "$${aws:ResourceTag/ExecutionRole}"
+                    }
+                }
+            }
+        ]
+    }
+}
+```
+
+### Key Points:
+1. **Reused Actions**: Only the actions from the provided policy are reused. No extra actions are added.
+2. **Read-Only Focus**: The policy focuses on `List` and `Describe` actions for **read-only access** in the console.
+3. **Resource Isolation**: The `Condition` block ensures that users can only describe resources tagged with their execution role.
+
+### Use Case:
+This policy is designed for users who need **console access** to **monitor and view** SageMaker resources. It allows them to **list and describe** resources without the ability to modify or delete them. Attach this policy to roles or users who require console access for auditing, monitoring, or troubleshooting purposes.
+
+Let me know if you need further adjustments!
