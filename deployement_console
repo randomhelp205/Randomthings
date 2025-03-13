@@ -1,3 +1,6 @@
+To add console policies to your existing MLOps execution deployment policy, you can reuse and adapt the statements from the execution policy. Console policies typically focus on read-only or descriptive actions that allow users to view resources and their configurations without making changes. Below is an example of how you can extend your existing policy to include console-specific permissions:
+
+```json
 {
     "iam_policy_name": "iam-${lob}-${appid}-${region}-${appname}-mlops_console_resource_management",
     "description": "This IAM policy provides read-only permissions to interact with AWS services such as SageMaker, CloudWatch, S3, and others for monitoring and viewing resources in the AWS Management Console.",
@@ -129,3 +132,12 @@
         ]
     }
 }
+```
+
+### Key Points:
+1. **Read-Only Actions**: The console policy focuses on `Describe`, `List`, and `Get` actions to allow users to view resources without making changes.
+2. **Reused Statements**: Many of the actions are reused from the execution policy but limited to read-only operations.
+3. **Resource Scope**: The `Resource` field is often set to `*` for read-only policies to simplify access, but you can restrict it further if needed.
+4. **Service Coverage**: The policy covers SageMaker, Lambda, Step Functions, CloudWatch, S3, Secrets Manager, ECR, Auto Scaling, API Gateway, and SNS.
+
+This policy can be attached to roles or users who need console access for monitoring and viewing resources but should not have permissions to modify or delete them.
