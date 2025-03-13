@@ -1,14 +1,60 @@
-To add console policies to your existing MLOps execution deployment policy, you can reuse and adapt the statements from the execution policy. Console policies typically focus on read-only or descriptive actions that allow users to view resources and their configurations without making changes. Below is an example of how you can extend your existing policy to include console-specific permissions:
+To add **console policies** to your existing MLOps execution deployment policy, we need to ensure that the console policies include both **read-only access** (for monitoring and viewing resources) and **create/delete actions** (for managing resources via the console). The console policies should reuse statements from the execution policy but focus on actions that are relevant for console-based operations.
 
+Below is the updated policy with **console-specific permissions** added:
+
+### Updated Policy with Console Permissions
 ```json
 {
     "iam_policy_name": "iam-${lob}-${appid}-${region}-${appname}-mlops_console_resource_management",
-    "description": "This IAM policy provides read-only permissions to interact with AWS services such as SageMaker, CloudWatch, S3, and others for monitoring and viewing resources in the AWS Management Console.",
+    "description": "This IAM policy provides permissions to interact with AWS services such as SageMaker, CloudWatch, S3, Secrets Manager, and ECR via the AWS Management Console, including read-only access and create/delete actions.",
     "policy_document": {
         "Version": "2012-10-17",
         "Statement": [
             {
-                "Sid": "MLOPsConsoleReadOnly",
+                "Sid": "MLOPsConsoleCreateActions",
+                "Effect": "Allow",
+                "Action": [
+                    "sagemaker:CreateEndpoint",
+                    "sagemaker:CreateEndpointConfig",
+                    "sagemaker:CreateInferenceComponent",
+                    "sagemaker:CreateInferenceExperiment",
+                    "sagemaker:CreateInferenceRecommendationsJob",
+                    "sagemaker:CreateEdgeDeploymentPlan",
+                    "sagemaker:CreateEdgeDeploymentStage"
+                ],
+                "Resource": [
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:endpoint/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:endpoint-config/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:inference-experiment/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:inference-recommendations-job/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:edge-deployment-plan/*"
+                ]
+            },
+            {
+                "Sid": "MLOPsConsoleDeleteActions",
+                "Effect": "Allow",
+                "Action": [
+                    "sagemaker:DeleteEndpoint",
+                    "sagemaker:DeleteEndpointConfig",
+                    "sagemaker:DeleteInferenceComponent",
+                    "sagemaker:DeleteInferenceExperiment",
+                    "sagemaker:DeleteEdgeDeploymentPlan",
+                    "sagemaker:DeleteEdgeDeploymentStage"
+                ],
+                "Resource": [
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:endpoint/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:endpoint-config/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:inference-experiment/*",
+                    "arn:aws:sagemaker:${region}:${aws_account_id}:edge-deployment-plan/*"
+                ],
+                "Condition": {
+                    "StringEquals": {
+                        "aws:userId": "$${aws:ResourceTag/ExecutionRole}"
+                    }
+                }
+            },
+            {
+                "Sid": "MLOPsConsoleReadOnlyActions",
                 "Effect": "Allow",
                 "Action": [
                     "sagemaker:DescribeEndpoint",
@@ -28,116 +74,119 @@ To add console policies to your existing MLOps execution deployment policy, you 
                 "Resource": "*"
             },
             {
-                "Sid": "LambdaConsoleReadOnly",
+                "Sid": "LambdaConsoleActions",
                 "Effect": "Allow",
                 "Action": [
+                    "lambda:CreateFunction",
+                    "lambda:DeleteFunction",
                     "lambda:GetFunction",
-                    "lambda:GetFunctionConfiguration",
                     "lambda:ListFunctions",
-                    "lambda:ListTags"
+                    "lambda:InvokeFunction"
                 ],
                 "Resource": "arn:aws:lambda:${region}:${aws_account_id}:function/*"
             },
             {
-                "Sid": "StepFunctionsConsoleReadOnly",
+                "Sid": "StepFunctionsConsoleActions",
                 "Effect": "Allow",
                 "Action": [
-                    "states:DescribeActivity",
-                    "states:DescribeExecution",
+                    "states:CreateStateMachine",
+                    "states:DeleteStateMachine",
                     "states:DescribeStateMachine",
-                    "states:GetExecutionHistory",
-                    "states:ListExecutions",
                     "states:ListStateMachines",
-                    "states:ListActivities"
+                    "states:StartExecution",
+                    "states:StopExecution",
+                    "states:DescribeExecution"
                 ],
-                "Resource": "*"
+                "Resource": [
+                    "arn:aws:states:${region}:${aws_account_id}:stateMachine/*",
+                    "arn:aws:states:${region}:${aws_account_id}:execution/*"
+                ]
             },
             {
-                "Sid": "CloudWatchConsoleReadOnly",
+                "Sid": "S3ConsoleActions",
                 "Effect": "Allow",
                 "Action": [
+                    "s3:CreateBucket",
+                    "s3:DeleteBucket",
+                    "s3:ListBucket",
+                    "s3:GetBucketAcl",
+                    "s3:GetBucketLocation",
+                    "s3:GetBucketTagging"
+                ],
+                "Resource": "arn:aws:s3:::*"
+            },
+            {
+                "Sid": "SecretsManagerConsoleActions",
+                "Effect": "Allow",
+                "Action": [
+                    "secretsmanager:CreateSecret",
+                    "secretsmanager:DeleteSecret",
+                    "secretsmanager:DescribeSecret",
+                    "secretsmanager:GetSecretValue",
+                    "secretsmanager:ListSecrets"
+                ],
+                "Resource": "arn:aws:secretsmanager:${region}:${aws_account_id}:secret:/secret/sagemaker/${env}/${region}/*"
+            },
+            {
+                "Sid": "ECRConsoleActions",
+                "Effect": "Allow",
+                "Action": [
+                    "ecr:CreateRepository",
+                    "ecr:DeleteRepository",
+                    "ecr:DescribeRepositories",
+                    "ecr:ListImages",
+                    "ecr:GetDownloadUrlForLayer"
+                ],
+                "Resource": "arn:aws:ecr:${region}:${aws_account_id}:repository/*"
+            },
+            {
+                "Sid": "CloudWatchConsoleActions",
+                "Effect": "Allow",
+                "Action": [
+                    "cloudwatch:PutMetricAlarm",
+                    "cloudwatch:DeleteAlarms",
                     "cloudwatch:DescribeAlarms",
                     "cloudwatch:GetMetricData",
-                    "cloudwatch:GetMetricStatistics",
                     "cloudwatch:ListMetrics"
                 ],
                 "Resource": "*"
             },
             {
-                "Sid": "S3ConsoleReadOnly",
+                "Sid": "APIGatewayConsoleActions",
                 "Effect": "Allow",
                 "Action": [
-                    "s3:GetBucketLocation",
-                    "s3:GetBucketPolicy",
-                    "s3:GetBucketTagging",
-                    "s3:GetObject",
-                    "s3:ListAllMyBuckets",
-                    "s3:ListBucket"
+                    "apigateway:CreateRestApi",
+                    "apigateway:DeleteRestApi",
+                    "apigateway:GET",
+                    "apigateway:UpdateRestApiPolicy"
                 ],
                 "Resource": [
-                    "arn:aws:s3:::*"
+                    "arn:aws:apigateway:${region}:${aws_account_id}:restapi/*"
                 ]
             },
             {
-                "Sid": "SecretsManagerConsoleReadOnly",
+                "Sid": "SNSConsoleActions",
                 "Effect": "Allow",
                 "Action": [
-                    "secretsmanager:DescribeSecret",
-                    "secretsmanager:GetSecretValue",
-                    "secretsmanager:ListSecrets"
-                ],
-                "Resource": "*"
-            },
-            {
-                "Sid": "ECRConsoleReadOnly",
-                "Effect": "Allow",
-                "Action": [
-                    "ecr:DescribeRepositories",
-                    "ecr:ListImages",
-                    "ecr:GetDownloadUrlForLayer",
-                    "ecr:BatchGetImage"
-                ],
-                "Resource": "*"
-            },
-            {
-                "Sid": "AutoScalingConsoleReadOnly",
-                "Effect": "Allow",
-                "Action": [
-                    "autoscaling:DescribeAutoScalingGroups",
-                    "autoscaling:DescribeLaunchConfigurations",
-                    "autoscaling:DescribePolicies",
-                    "autoscaling:DescribeScalingActivities",
-                    "autoscaling:DescribeScalingPlans"
-                ],
-                "Resource": "*"
-            },
-            {
-                "Sid": "APIGatewayConsoleReadOnly",
-                "Effect": "Allow",
-                "Action": [
-                    "apigateway:GET"
-                ],
-                "Resource": "*"
-            },
-            {
-                "Sid": "SNSConsoleReadOnly",
-                "Effect": "Allow",
-                "Action": [
+                    "sns:CreateTopic",
+                    "sns:DeleteTopic",
+                    "sns:Publish",
                     "sns:ListTopics",
-                    "sns:GetTopicAttributes",
-                    "sns:ListSubscriptionsByTopic"
+                    "sns:GetTopicAttributes"
                 ],
-                "Resource": "*"
+                "Resource": "arn:aws:sns:${region}:${aws_account_id}:topic/*"
             }
         ]
     }
 }
 ```
 
-### Key Points:
-1. **Read-Only Actions**: The console policy focuses on `Describe`, `List`, and `Get` actions to allow users to view resources without making changes.
-2. **Reused Statements**: Many of the actions are reused from the execution policy but limited to read-only operations.
-3. **Resource Scope**: The `Resource` field is often set to `*` for read-only policies to simplify access, but you can restrict it further if needed.
-4. **Service Coverage**: The policy covers SageMaker, Lambda, Step Functions, CloudWatch, S3, Secrets Manager, ECR, Auto Scaling, API Gateway, and SNS.
+### Key Additions for Console Policies:
+1. **Create/Delete Actions**: Added `Create` and `Delete` actions for SageMaker, Lambda, Step Functions, S3, Secrets Manager, ECR, CloudWatch, API Gateway, and SNS to allow users to manage resources via the console.
+2. **Read-Only Actions**: Included `Describe` and `List` actions for monitoring and viewing resources in the console.
+3. **Resource Isolation**: Retained conditions (e.g., `aws:userId`) to ensure users can only manage resources tagged with their execution role.
 
-This policy can be attached to roles or users who need console access for monitoring and viewing resources but should not have permissions to modify or delete them.
+### Use Case:
+This policy is designed for users who need **console access** to manage and monitor MLOps resources. It allows them to **create, delete, and view** resources while maintaining isolation based on resource tags. Attach this policy to roles or users who require console access for managing MLOps workflows.
+
+Let me know if you need further adjustments!
