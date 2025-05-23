@@ -1,0 +1,316 @@
+# Terraform Test Cases for Networking Components
+
+Based on your networking modules (Route53 CNAME records, Security Groups, and VPC Endpoint associations), here are comprehensive test cases following the same pattern as your IAM tests:
+
+## Route53 CNAME Records Test Cases
+
+```hcl
+run "test_cname_records_created" {
+  command = plan
+
+  module {
+    source = "./terraform-aws-route53-record"
+  }
+
+  # Test case 1: Ensure all CNAME records are created
+  assert {
+    condition = length(aws_route53_record.cname_record) == length(var.cname_records)
+    error_message = format("Expected %d CNAME records but plan shows %d", 
+      length(var.cname_records),
+      length(aws_route53_record.cname_record)
+    )
+  }
+}
+
+run "test_cname_record_values" {
+  command = plan
+
+  module {
+    source = "./terraform-aws-route53-record"
+  }
+
+  # Test case 2: Ensure CNAME records point to correct values
+  assert {
+    condition = alltrue([for record in aws_route53_record.cname_record : 
+      record.records[0] == var.record
+    ])
+    error_message = "One or more CNAME records do not point to the expected value"
+  }
+}
+
+run "test_cname_ttl_values" {
+  command = plan
+
+  module {
+    source = "./terraform-aws-route53-record"
+  }
+
+  # Test case 3: Ensure TTL values are set correctly
+  assert {
+    condition = alltrue([for record in aws_route53_record.cname_record : 
+      record.ttl == var.ttl
+    ])
+    error_message = "One or more CNAME records have incorrect TTL values"
+  }
+}
+```
+
+## Security Group Test Cases
+
+```hcl
+run "test_security_groups_created" {
+  command = plan
+
+  module {
+    source = "./terraform-root-modelops_tpl_security-groups/terraform-aws-ec2-security-group"
+  }
+
+  # Test case 1: Verify security groups are created
+  assert {
+    condition = length(aws_security_group.sg) > 0
+    error_message = "No security groups were created in the plan"
+  }
+}
+
+run "test_security_group_naming" {
+  command = plan
+
+  module {
+    source = "./terraform-root-modelops_tpl_security-groups/terraform-aws-ec2-security-group"
+  }
+
+  # Test case 2: Verify security group naming convention
+  assert {
+    condition = alltrue([for sg in aws_security_group.sg : 
+      can(regex("^sg-${var.env}-${var.region}-[a-zA-Z0-9-]+$", sg.name))
+    ])
+    error_message = "One or more security groups don't follow naming convention"
+  }
+}
+
+run "test_security_group_vpc_association" {
+  command = plan
+
+  module {
+    source = "./terraform-root-modelops_tpl_security-groups/terraform-aws-ec2-security-group"
+  }
+
+  # Test case 3: Verify all SGs are created in correct VPC
+  assert {
+    condition = alltrue([for sg in aws_security_group.sg : 
+      sg.vpc_id == var.vpc_id
+    ])
+    error_message = "One or more security groups are not in the correct VPC"
+  }
+}
+
+run "test_security_group_tags" {
+  command = plan
+
+  module {
+    source = "./terraform-root-modelops_tpl_security-groups/terraform-aws-ec2-security-group"
+  }
+
+  # Test case 4: Verify required tags are present
+  assert {
+    condition = alltrue([for sg in aws_security_group.sg :
+      alltrue([for key, value in var.default_tags : lookup(sg.tags, key, null) == value]) &&
+      lookup(sg.tags, "Name", null) != null
+    ])
+    error_message = "One or more security groups are missing required tags"
+  }
+}
+```
+
+## Security Group Rules Test Cases
+
+```hcl
+run "test_ingress_rules_created" {
+  command = plan
+
+  module {
+    source = "./terraform-root-modelops_tpl_security-groups/terraform-aws-ec2-security-rule"
+  }
+
+  # Test case 1: Verify ingress rules are created
+  assert {
+    condition = length(aws_vpc_security_group_ingress_rule.ingress) > 0
+    error_message = "No ingress rules were created in the plan"
+  }
+}
+
+run "test_egress_rules_created" {
+  command = plan
+
+  module {
+    source = "./terraform-root-modelops_tpl_security-groups/terraform-aws-ec2-security-rule"
+  }
+
+  # Test case 2: Verify egress rules are created
+  assert {
+    condition = length(aws_vpc_security_group_egress_rule.egress) > 0
+    error_message = "No egress rules were created in the plan"
+  }
+}
+
+run "test_security_group_rule_ports" {
+  command = plan
+
+  module {
+    source = "./terraform-root-modelops_tpl_security-groups/terraform-aws-ec2-security-rule"
+  }
+
+  # Test case 3: Verify rule ports are valid
+  assert {
+    condition = alltrue(concat(
+      [for rule in aws_vpc_security_group_ingress_rule.ingress : 
+        rule.from_port <= rule.to_port && rule.from_port >= 0 && rule.to_port <= 65535
+      ],
+      [for rule in aws_vpc_security_group_egress_rule.egress : 
+        rule.from_port <= rule.to_port && rule.from_port >= 0 && rule.to_port <= 65535
+      ]
+    ))
+    error_message = "One or more security group rules have invalid port ranges"
+  }
+}
+
+run "test_security_group_rule_protocols" {
+  command = plan
+
+  module {
+    source = "./terraform-root-modelops_tpl_security-groups/terraform-aws-ec2-security-rule"
+  }
+
+  # Test case 4: Verify rule protocols are valid
+  valid_protocols = ["tcp", "udp", "icmp", "-1"]
+  
+  assert {
+    condition = alltrue(concat(
+      [for rule in aws_vpc_security_group_ingress_rule.ingress : 
+        contains(local.valid_protocols, rule.ip_protocol)
+      ],
+      [for rule in aws_vpc_security_group_egress_rule.egress : 
+        contains(local.valid_protocols, rule.ip_protocol)
+      ]
+    ))
+    error_message = "One or more security group rules have invalid protocols"
+  }
+}
+```
+
+## VPC Endpoint Association Test Cases
+
+```hcl
+run "test_vpc_endpoint_associations" {
+  command = plan
+
+  module {
+    source = "./terraform-root-modelops_tpl_security-groups/terraform-aws-vpce-association"
+  }
+
+  # Test case 1: Verify VPC endpoint associations are created
+  assert {
+    condition = length(aws_vpc_endpoint_security_group_association.vpc_endpoint_sg) == length(var.vpc_endpoints)
+    error_message = format("Expected %d VPC endpoint associations but plan shows %d",
+      length(var.vpc_endpoints),
+      length(aws_vpc_endpoint_security_group_association.vpc_endpoint_sg)
+    )
+  }
+}
+
+run "test_vpc_endpoint_correct_sg" {
+  command = plan
+
+  module {
+    source = "./terraform-root-modelops_tpl_security-groups/terraform-aws-vpce-association"
+  }
+
+  # Test case 2: Verify correct security group is associated
+  assert {
+    condition = alltrue([for assoc in aws_vpc_endpoint_security_group_association.vpc_endpoint_sg : 
+      assoc.security_group_id == var.vpce_security_group
+    ])
+    error_message = "One or more VPC endpoints have incorrect security group association"
+  }
+}
+```
+
+## Integration Test Cases
+
+```hcl
+run "test_sg_rule_to_sg_association" {
+  command = plan
+
+  module {
+    source = "./terraform-root-modelops_tpl_security-groups"
+  }
+
+  # Test case 1: Verify security group rules reference existing security groups
+  assert {
+    condition = alltrue([for rule in aws_vpc_security_group_ingress_rule.ingress :
+      rule.referenced_security_group_id == null || contains(values(aws_security_group.sg), rule.referenced_security_group_id)
+    ])
+    error_message = "One or more ingress rules reference non-existent security groups"
+  }
+}
+
+run "test_vpce_sg_exists" {
+  command = plan
+
+  module {
+    source = "./terraform-root-modelops_tpl_security-groups"
+  }
+
+  # Test case 2: Verify VPC endpoint SG exists before association
+  assert {
+    condition = contains(values(aws_security_group.sg), var.vpce_security_group)
+    error_message = "VPC endpoint security group does not exist"
+  }
+}
+```
+
+## Variables Block (for all tests)
+
+```hcl
+variables {
+  # Common variables
+  region         = "us-east-1"
+  env            = "dev"
+  vpc_id         = "vpc-12345678"
+  vpce_security_group = "sg-12345678"
+  default_tags = {
+    Environment = "dev"
+    Terraform   = "true"
+  }
+
+  # Route53 variables
+  cname_records = ["test1.example.com", "test2.example.com"]
+  record        = "target.example.com"
+  ttl           = 300
+
+  # Security Group variables
+  sg_configs = {
+    "web" = {
+      name        = "sg-dev-us-east-1-web"
+      description = "Web servers security group"
+    }
+  }
+
+  # VPC Endpoint variables
+  vpc_endpoints = {
+    "s3" = {
+      id = "vpce-12345678"
+    }
+  }
+}
+```
+
+These test cases follow the same comprehensive approach as your IAM tests, covering:
+- Resource creation validation
+- Naming conventions
+- Configuration correctness
+- Tagging requirements
+- Integration between components
+- Security best practices
+
+The tests are organized by module and include both positive validation and error checking. Error messages are descriptive to help quickly identify issues during test failures.
