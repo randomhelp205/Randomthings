@@ -1,0 +1,223 @@
+# tests/security_group_module_test.tftest.hcl
+
+variables {
+  # Common variables
+  region         = "us-east-1"
+  env            = "dev"
+  aws_account_id = "123456789012"
+  vpc_id         = "vpc-12345678"
+  vpc_cidr_range = "10.0.0.0/16"
+  
+  # Security Group variables
+  sg_template_base      = "../../terraform_templates/security-groups"
+  sg_rule_template_base = "../../terraform_templates/security-group-rules"
+  
+  # VPC Endpoint variables
+  vpc_endpoints = {
+    s3 = {
+      id = "vpce-12345678"
+    },
+    dynamodb = {
+      id = "vpce-87654321"
+    }
+  }
+  
+  # Default tags
+  default_tags = {
+    tfc-business-application-id   = "APPID-13695807"
+    tfc-business-cost-center      = "10676-0102"
+    tfc-created-by                = "DL.EDA.MLOPS.PLATFORM.CLOUD@000.com"
+    tfc-technical-supported-by    = "DL.EDA.MLOPS.PLATFORM.CLOUD@000.com"
+    tfc-business-application-code = "at09"
+    tfc-after-hours               = "no"
+    tfc-security-data-classification = "Internal"
+    tfc-app-role                  = "networking"
+    tfc-technical-environment     = "DEV"
+  }
+}
+
+### Security Group Tests ###
+run "test_sg_creation" {
+  command = plan
+  
+  module {
+    source = "./terraform-root-modelops_tpl_security-groups/terraform-aws-ec2-security-group"
+  }
+
+  assert {
+    condition = length(aws_security_group.sg) > 0
+    error_message = "No security groups were created"
+  }
+}
+
+run "test_sg_naming_convention" {
+  command = plan
+  
+  module {
+    source = "./terraform-root-modelops_tpl_security-groups/terraform-aws-ec2-security-group"
+  }
+
+  assert {
+    condition = alltrue([
+      for sg in aws_security_group.sg : 
+      can(regex("^sg-${var.env}-${var.region}-[a-zA-Z0-9-]+$", sg.name))
+    ])
+    error_message = "One or more security groups have invalid names"
+  }
+}
+
+run "test_sg_vpc_association" {
+  command = plan
+  
+  module {
+    source = "./terraform-root-modelops_tpl_security-groups/terraform-aws-ec2-security-group"
+  }
+
+  assert {
+    condition = alltrue([
+      for sg in aws_security_group.sg : sg.vpc_id == var.vpc_id
+    ])
+    error_message = "One or more security groups are not in the correct VPC"
+  }
+}
+
+### Security Group Rules Tests ###
+run "test_ingress_rule_creation" {
+  command = plan
+  
+  module {
+    source = "./terraform-root-modelops_tpl_security-groups/terraform-aws-ec2-security-rule"
+  }
+
+  assert {
+    condition = length(aws_vpc_security_group_ingress_rule.ingress) > 0
+    error_message = "No ingress rules were created"
+  }
+}
+
+run "test_egress_rule_creation" {
+  command = plan
+  
+  module {
+    source = "./terraform-root-modelops_tpl_security-groups/terraform-aws-ec2-security-rule"
+  }
+
+  assert {
+    condition = length(aws_vpc_security_group_egress_rule.egress) > 0
+    error_message = "No egress rules were created"
+  }
+}
+
+run "test_rule_port_ranges" {
+  command = plan
+  
+  module {
+    source = "./terraform-root-modelops_tpl_security-groups/terraform-aws-ec2-security-rule"
+  }
+
+  assert {
+    condition = alltrue([
+      for rule in concat(
+        values(aws_vpc_security_group_ingress_rule.ingress),
+        values(aws_vpc_security_group_egress_rule.egress)
+      ) :
+      rule.from_port <= rule.to_port &&
+      rule.from_port >= 0 &&
+      rule.to_port <= 65535
+    ])
+    error_message = "One or more rules have invalid port ranges"
+  }
+}
+
+run "test_rule_source_types" {
+  command = plan
+  
+  module {
+    source = "./terraform-root-modelops_tpl_security-groups/terraform-aws-ec2-security-rule"
+  }
+
+  assert {
+    condition = alltrue([
+      for rule in concat(
+        values(aws_vpc_security_group_ingress_rule.ingress),
+        values(aws_vpc_security_group_egress_rule.egress)
+      ) :
+      (rule.cidr_ipv4 != null ? 1 : 0) +
+      (rule.referenced_security_group_id != null ? 1 : 0) +
+      (rule.prefix_list_id != null ? 1 : 0) <= 1
+    ])
+    error_message = "One or more rules have conflicting source types"
+  }
+}
+
+### VPC Endpoint Association Tests ###
+run "test_vpce_association_creation" {
+  command = plan
+  
+  module {
+    source = "./terraform-root-modelops_tpl_security-groups/terraform-aws-vpce-association"
+  }
+
+  assert {
+    condition = length(aws_vpc_endpoint_security_group_association.vpc_endpoint_sg) == length(var.vpc_endpoints)
+    error_message = "Number of VPC endpoint associations does not match input count"
+  }
+}
+
+run "test_vpce_correct_sg_association" {
+  command = plan
+  
+  module {
+    source = "./terraform-root-modelops_tpl_security-groups/terraform-aws-vpce-association"
+  }
+
+  assert {
+    condition = alltrue([
+      for assoc in aws_vpc_endpoint_security_group_association.vpc_endpoint_sg :
+      assoc.security_group_id == var.vpce_security_group
+    ])
+    error_message = "One or more VPC endpoints are associated with wrong security group"
+  }
+}
+
+run "test_vpce_association_tags" {
+  command = plan
+  
+  module {
+    source = "./terraform-root-modelops_tpl_security-groups/terraform-aws-vpce-association"
+  }
+
+  assert {
+    condition = alltrue([
+      for assoc in aws_vpc_endpoint_security_group_association.vpc_endpoint_sg :
+      can(regex("^vpce-${var.env}-${var.region}-sg-assoc$", assoc.tags["Name"]))
+    ])
+    error_message = "One or more VPC endpoint associations have incorrect tags"
+  }
+}
+
+### Cross-Module Integration Tests ###
+run "test_sg_rules_associated_with_existing_sgs" {
+  command = plan
+  
+  module {
+    source = "./terraform-root-modelops_tpl_security-groups/terraform-aws-ec2-security-rule"
+  }
+
+  # Get the security groups created in the SG module
+  module "sg_module" {
+    source = "./terraform-root-modelops_tpl_security-groups/terraform-aws-ec2-security-group"
+  }
+
+  assert {
+    condition = alltrue([
+      for rule in concat(
+        values(aws_vpc_security_group_ingress_rule.ingress),
+        values(aws_vpc_security_group_egress_rule.egress)
+      ) :
+      contains(values(module.sg_module.aws_security_group.sg[*].id), rule.security_group_id) ||
+      contains(values(var.security_group_ids), rule.security_group_id)
+    ])
+    error_message = "One or more rules reference non-existent security groups"
+  }
+}
