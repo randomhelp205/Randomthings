@@ -1,0 +1,105 @@
+# **Final Version: ECR Monitoring Test Cases with Full Event Coverage**  
+
+## **Test Cases for ECR Event Monitoring in AWS**  
+
+### **1. Verify ECR Repository Creation/Deletion Events**  
+**Covered Events:**  
+- `CreateRepository`  
+- `DeleteRepository`  
+- `AWS KMSCreateGrant` (when encryption is enabled)  
+- `ECR Replication Action` (if replication is configured during creation)  
+
+**Validation:**  
+✔ Ensure CloudWatch Logs capture repository lifecycle events.  
+✔ Verify KMS grants appear when encryption is enabled.  
+
+---
+
+### **2. Validate Image Push/Pull & Referrer Actions**  
+**Covered Events:**  
+- **Push/Pull Actions:**  
+  - `PutImage`, `BatchGetImage`, `GetDownloadUrlForLayer`  
+  - `InitiateLayerUpload`, `CompleteLayerUpload`, `UploadLayerPart`  
+- **Pull-Through Cache:**  
+  - `PullThroughCacheAction` (for cached pulls)  
+- **Tagging & Referrers:**  
+  - `TagResource`, `UntagResource`  
+  - `PutImageTagMutability`  
+  - `DescribeImageTags`  
+
+**Validation:**  
+✔ Confirm push/pull metadata (e.g., image digest, timestamp).  
+✔ Verify tagging and referrer changes are logged.  
+
+---
+
+### **3. Verify Image Scan Events & Results**  
+**Covered Events:**  
+- `StartImageScan`, `DescribeImageScanFindings`  
+- `ECR Scan Resource Change` (config updates)  
+- Scan status changes (`IN_PROGRESS`, `COMPLETE`, `FAILED`)  
+- Vulnerability findings (CVSS scores, severity levels)  
+
+**Validation:**  
+✔ Ensure scan initiation and results appear in logs.  
+✔ Check if failed scans log appropriate errors.  
+
+---
+
+### **4. Test Lifecycle Policy Actions**  
+**Covered Events:**  
+- `PutLifecyclePolicy` (policy updates)  
+- `LifecyclePolicyPreview` (dry-run results)  
+- Actual expirations (`DeleteImage` due to policy)  
+- Failed policy executions (logged in CloudTrail)  
+
+**Validation:**  
+✔ Verify policy changes and executions are captured.  
+✔ Check if failed deletions (e.g., due to permissions) are logged.  
+
+---
+
+### **5. Validate Cross-Region Replication & Pull-Through Cache Events**  
+**Covered Events:**  
+- `ECR Replication Action` (cross-region sync)  
+- `CreatePullThroughCacheRule` / `DeletePullThroughCacheRule`  
+- `PullThroughCacheAction` (cache hits/misses)  
+
+**Validation:**  
+✔ Confirm replication setup/completion logs.  
+✔ Ensure cache rule changes are recorded.  
+
+---
+
+### **6. Confirm All ECR API Calls Are Logged in CloudTrail**  
+**Covered Events:**  
+✅ **All ECR API calls** (console, CLI, SDK)  
+✅ **Encryption-related actions** (KMS grants, key usage)  
+✅ **Failed API attempts** (unauthorized access, throttling)  
+
+**Validation:**  
+✔ Check CloudTrail for **every** ECR API call.  
+✔ Ensure no missing events (e.g., `ListImages`, `DescribeRepositories`).  
+
+---
+
+## **Summary of Event Coverage**  
+| **Event Type**               | **Test Case** |  
+|------------------------------|--------------|  
+| Repository Create/Delete     | 1 |  
+| Image Push/Pull              | 2 |  
+| Image Tagging/Referrers      | 2 |  
+| Image Scanning               | 3 |  
+| Lifecycle Policies           | 4 |  
+| Replication & Cache Rules    | 5 |  
+| **All Other API Calls**      | 6 |  
+
+### **Final Check:** ✅ **100% Coverage**  
+All ECR events from the description are now explicitly covered in the test cases.  
+
+### **Next Steps:**  
+- Implement EventBridge rules for each event type.  
+- Set up CloudWatch Logs and CloudTrail logging.  
+- Automate validation using AWS CLI or Terraform checks.  
+
+This ensures **complete monitoring** of ECR activity with no gaps. 🚀
