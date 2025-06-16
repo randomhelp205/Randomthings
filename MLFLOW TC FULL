@@ -1,0 +1,93 @@
+# **Final Version: MLflow Tracking Server Monitoring Test Plan**
+
+## **Test Cases for MLflow Tracking Server Monitoring**
+
+### **1. Verify MLflow Tracking Server Lifecycle Events**
+**Covered Events (CloudTrail + EventBridge):**
+- `CreateMlflowTrackingServer` → "Creating/Created/Create Failed"  
+- `UpdateMlflowTrackingServer` → "Updating/Updated/Update Failed"  
+- `DeleteMlflowTrackingServer` → "Deleting/Deleted/Delete Failed"  
+- `StartMlflowTrackingServer` → "Starting/Started/Start Failed"  
+- `StopMlflowTrackingServer` → "Stopping/Stopped/Stop Failed"  
+
+**Validation:**  
+✔ Ensure **creation, updates, deletion, start/stop** events appear in CloudWatch Logs.  
+✔ Verify **success/failure** states are logged (e.g., "Create Failed").  
+
+---
+
+### **2. Validate Maintenance Events for MLflow Tracking Servers**  
+**Covered Events (EventBridge):**  
+- `"Maintenance In Progress"`  
+- `"Maintenance Complete"`  
+- `"Maintenance Failed"`  
+
+**Validation:**  
+✔ Check if scheduled maintenance events (upgrades, patches) are logged.  
+✔ Confirm failures during maintenance trigger alerts.  
+
+---
+
+### **3. Verify MLflow Experiment & Model Events**  
+**Covered Events (EventBridge):**  
+- `"Creating Run"` (experiment tracking)  
+- `"Creating RegisteredModel"` (model registry)  
+- `"Creating ModelVersion"` (versioning)  
+- `"Transitioning ModelVersion Stage"` (e.g., Staging → Production)  
+- `"Setting Registered Model Alias"` (e.g., "champion" model tagging)  
+
+**Validation:**  
+✔ Ensure experiment runs, model registrations, and stage transitions are logged.  
+✔ Check if model aliases (e.g., `best-model`) appear in logs.  
+
+---
+
+### **4. Confirm Critical MLflow API Calls in CloudTrail**  
+**Covered Events (CloudTrail):**  
+- `CreatePresignedMlflowTrackingServer` (temporary access)  
+- `DescribeMlflowTrackingServer` (metadata checks)  
+- `ListMlflowTrackingServers` (inventory listing)  
+
+**Validation:**  
+✔ Verify **all administrative API calls** are recorded in CloudTrail.  
+✔ Ensure `Presigned` URLs (temporary access) are audited.  
+
+---
+
+### **5. Test EventBridge Routing & CloudWatch Retention**  
+**Validation Steps:**  
+1. **EventBridge Rules:**  
+   - Confirm each MLflow event type triggers a rule.  
+   - Test with simulated events (e.g., `aws events put-rule`).  
+2. **CloudWatch Logs:**  
+   - Verify logs are stored in the correct log group.  
+   - Check retention period (e.g., 30/90 days) aligns with policy.  
+3. **Error Handling:**  
+   - Test if failed events (e.g., "Create Failed") are retained.  
+
+---
+
+## **Summary of Event Coverage**  
+
+| **Event Type**               | **Test Case** |  
+|------------------------------|--------------|  
+| Server Lifecycle (Create/Update/Delete) | 1 |  
+| Start/Stop Events            | 1 |  
+| Maintenance Events           | 2 |  
+| Experiment & Model Actions   | 3 |  
+| Critical API Calls           | 4 |  
+| EventBridge → CloudWatch Logging | 5 |  
+
+### **Final Check:** ✅ **100% Coverage**  
+All MLflow Tracking Server events (CloudTrail + EventBridge) are accounted for.  
+
+### **Next Steps:**  
+- **Deploy EventBridge rules** for each event pattern.  
+- **Set up CloudWatch Log Groups** with retention policies.  
+- **Automate validation** using AWS CLI:  
+  ```bash
+  aws logs filter-log-events --log-group-name "/aws/events/mlflow-tracking" --query "events[*].message"
+  ```
+- **Configure alerts** for critical failures (e.g., "Maintenance Failed").  
+
+This ensures **end-to-end monitoring** of MLflow Tracking Server activity. 🚀
